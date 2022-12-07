@@ -4,6 +4,7 @@ Documentation       Download CSV file and place robot orders/save confirmations 
 Library             RPA.Browser.Selenium
 Library             RPA.HTTP
 Library             RPA.Tables
+Library             RPA.FileSystem
 
 
 *** Variables ***
@@ -13,9 +14,16 @@ ${Order_URL}=       https://robotsparebinindustries.com/#/robot-order
 
 *** Tasks ***
 Order robots
+    Remove Directory    ${OUTPUT_DIR}${/}screenshots
     Download CSV    ${CSV_URL}
     Open Browser for Ordering    ${Order_URL}
-    Process Orders
+
+    ${orders}=    Read table from CSV    orders.csv    header=True
+    FOR    ${order}    IN    @{orders}
+        Add order details    ${order}
+        Take Screenshot of Robot    ${order}[Order number]
+    END
+
     [Teardown]    Close Browser for Ordering
 
 
@@ -39,8 +47,8 @@ Add order details
     Input Text    //label[contains(.,'Legs')]/../input    ${order}[Legs]
     Input Text    id:address    ${order}[Address]
 
-Process Orders
-    ${orders}=    Read table from CSV    orders.csv    header=True
-    FOR    ${order}    IN    @{orders}
-        Add order details    ${order}
-    END
+Take Screenshot of Robot
+    [Arguments]    ${no}
+    Click Button    id:preview
+    Wait Until Page Contains Element    id:robot-preview-image
+    Screenshot    id:robot-preview-image    ${OUTPUT_DIR}${/}screenshots${/}order${no}.png
