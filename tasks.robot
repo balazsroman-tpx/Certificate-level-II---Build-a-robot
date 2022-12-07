@@ -22,4 +22,4 @@ Close Browser
 
 Download CSV
     [Arguments]    ${URL}
-    Download    ${URL}
+    Download    ${URL}    overwrite=True
