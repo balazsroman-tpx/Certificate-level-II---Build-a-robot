@@ -15,6 +15,8 @@ ${CSV_URL}=             https://robotsparebinindustries.com/orders.csv
 ${Order_URL}=           https://robotsparebinindustries.com/#/robot-order
 ${Screenshot_DIR}       ${OUTPUT_DIR}${/}screenshots
 ${Receipt_DIR}          ${OUTPUT_DIR}${/}receipts
+${Retry_MAX}            5x
+${Retry_SEC}            1s
 
 
 *** Tasks ***
@@ -43,8 +45,7 @@ Order robots
 *** Keywords ***
 Create ZIP
     [Arguments]    ${folder}
-    ${date}=    Get Current Date
-    ${filename}=    Convert Date    ${date}    result_format=%Y-%m-%d %H%M
+    ${date}=    Get Current Date    result_format=%Y-%m-%d %H.%M
     Archive Folder With Zip    ${folder}    ${OUTPUT_DIR}${/}${date}.zip
 
 Open Browser for Ordering
@@ -65,8 +66,9 @@ Add order details
     Input Text    //label[contains(.,'Legs')]/../input    ${order}[Legs]
     Input Text    id:address    ${order}[Address]
 
-Preview Order
-    Wait Until Keyword Succeeds    5x    2s    Click Button    id:preview
+Submit Order
+    Click Element    id:order
+    Wait Until Page Contains Element    id:receipt
 
 Take Screenshot of Robot
     [Arguments]    ${no}
@@ -78,14 +80,13 @@ Close modal
     Wait And Click Button    css:.btn-dark
 
 Open New Order
-    Wait Until Keyword Succeeds    5x    2s    Click Element When Visible    id:order-another
+    Wait Until Keyword Succeeds    ${Retry_MAX}    ${Retry_SEC}    Click Element When Visible    id:order-another
 
-Submit Order
-    Click Element    id:order
-    Wait Until Page Contains Element    id:receipt
+Preview Order
+    Wait Until Keyword Succeeds    ${Retry_MAX}    ${Retry_SEC}    Click Button    id:preview
 
 Try to Submit Order
-    Wait Until Keyword Succeeds    5x    2s    Submit Order
+    Wait Until Keyword Succeeds    ${Retry_MAX}    ${Retry_SEC}    Submit Order
 
 Generate Receipt PDF
     [Arguments]    ${no}
