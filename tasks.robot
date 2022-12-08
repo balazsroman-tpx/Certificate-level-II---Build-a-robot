@@ -29,7 +29,7 @@ Order robots
         Add order details    ${order}
         Preview Order
         Take Screenshot of Robot    ${order}[Order number]
-        Submit Order
+        Try to Submit Order
         Generate Receipt PDF    ${order}[Order number]
         Open New Order
         Create final PDF    ${order}[Order number]    ${Screenshot_DIR}    ${Receipt_DIR}
@@ -44,6 +44,7 @@ Order robots
 Create ZIP
     [Arguments]    ${folder}
     ${date}=    Get Current Date
+    ${filename}=    Convert Date    ${date}    result_format=%Y-%m-%d %H%M
     Archive Folder With Zip    ${folder}    ${OUTPUT_DIR}${/}${date}.zip
 
 Open Browser for Ordering
@@ -81,7 +82,10 @@ Open New Order
 
 Submit Order
     Click Element    id:order
-    Wait Until Keyword Succeeds    5x    2s    Wait Until Page Contains Element    id:receipt
+    Wait Until Page Contains Element    id:receipt
+
+Try to Submit Order
+    Wait Until Keyword Succeeds    5x    2s    Submit Order
 
 Generate Receipt PDF
     [Arguments]    ${no}
