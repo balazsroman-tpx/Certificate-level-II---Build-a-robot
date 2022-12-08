@@ -8,22 +8,25 @@ Library             RPA.FileSystem
 Library             RPA.PDF
 Library             RPA.Archive
 Library             DateTime
+Library             RPA.Dialogs
+
+Suite Teardown      Close All Browsers
 
 
 *** Variables ***
-${CSV_URL}=             https://robotsparebinindustries.com/orders.csv
-${Order_URL}=           https://robotsparebinindustries.com/#/robot-order
-${Screenshot_DIR}       ${OUTPUT_DIR}${/}screenshots
-${Receipt_DIR}          ${OUTPUT_DIR}${/}receipts
-${Retry_MAX}            5x
-${Retry_SEC}            1s
+${URL_CSV}=             https://robotsparebinindustries.com/orders.csv
+${URL_Web}=             https://robotsparebinindustries.com/#/robot-order
+${DIR_Receipt}          ${OUTPUT_DIR}${/}screenshots
+${DIR_Screenshot}       ${OUTPUT_DIR}${/}receipts
+${MAX_Retry}            5x
+${MIN_Timeout}          1s
 
 
 *** Tasks ***
 Order robots
-    [Setup]    Startup    ${Screenshot_DIR}    ${Receipt_DIR}
+    [Setup]    Startup    ${DIR_Screenshot}    ${DIR_Receipt}
 
-    Open Browser for Ordering    ${Order_URL}
+    Open Browser for Ordering    ${URL_Web}
 
     ${orders}=    Read table from CSV    orders.csv    header=True
     FOR    ${order}    IN    @{orders}
@@ -34,15 +37,20 @@ Order robots
         Try to Submit Order
         Generate Receipt PDF    ${order}[Order number]
         Open New Order
-        Create final PDF    ${order}[Order number]    ${Screenshot_DIR}    ${Receipt_DIR}
+        Create final PDF    ${order}[Order number]    ${DIR_Screenshot}    ${DIR_Receipt}
     END
 
-    Create ZIP    ${Receipt_DIR}
+    Create ZIP    ${DIR_Receipt}
 
     [Teardown]    Close Browser for Ordering
 
 
 *** Keywords ***
+Collect search query from user
+    Add text input    URL    label=CSV Location
+    ${response}=    Run dialog
+    RETURN    ${response.search}
+
 Create ZIP
     [Arguments]    ${folder}
     ${date}=    Get Current Date    result_format=%Y-%m-%d %H.%M
@@ -80,13 +88,13 @@ Close modal
     Wait And Click Button    css:.btn-dark
 
 Open New Order
-    Wait Until Keyword Succeeds    ${Retry_MAX}    ${Retry_SEC}    Click Element When Visible    id:order-another
+    Wait Until Keyword Succeeds    ${MAX_Retry}    ${MIN_Timeout}    Click Element When Visible    id:order-another
 
 Preview Order
-    Wait Until Keyword Succeeds    ${Retry_MAX}    ${Retry_SEC}    Click Button    id:preview
+    Wait Until Keyword Succeeds    ${MAX_Retry}    ${MIN_Timeout}    Click Button    id:preview
 
 Try to Submit Order
-    Wait Until Keyword Succeeds    ${Retry_MAX}    ${Retry_SEC}    Submit Order
+    Wait Until Keyword Succeeds    ${MAX_Retry}    ${MIN_Timeout}    Submit Order
 
 Generate Receipt PDF
     [Arguments]    ${no}
@@ -94,24 +102,25 @@ Generate Receipt PDF
     Html To Pdf    ${receipt_html}    ${OUTPUT_DIR}${/}receipts${/}order${no}.pdf
 
 Create final PDF
-    [Arguments]    ${no}    ${screenshot_dir}    ${receipt_dir}
-    ${pdf}=    Open Pdf    ${receipt_dir}${/}order${no}.pdf
+    [Arguments]    ${no}    ${DIR_Screenshot}    ${DIR_Receipt}
+    ${pdf}=    Open Pdf    ${DIR_Receipt}${/}order${no}.pdf
     Add Watermark Image To Pdf
-    ...    ${screenshot_dir}${/}order${no}.png
-    ...    ${receipt_dir}${/}order${no}.pdf
-    ...    ${receipt_dir}${/}order${no}.pdf
+    ...    ${DIR_Screenshot}${/}order${no}.png
+    ...    ${DIR_Receipt}${/}order${no}.pdf
+    ...    ${DIR_Receipt}${/}order${no}.pdf
     Close Pdf
 
 Startup
-    [Arguments]    ${screenshot_dir}    ${receipt_dir}
-    ${screenshot_exists}=    Does Directory Exist    ${screenshot_dir}
+    [Arguments]    ${DIR_Screenshot}    ${DIR_Receipt}
+    ${screenshot_exists}=    Does Directory Exist    ${DIR_Screenshot}
     IF    ${screenshot_exists} == ${True}
-        Remove Directory    ${screenshot_dir}    recursive=${True}
+        Remove Directory    ${DIR_Screenshot}    recursive=${True}
     END
 
-    ${receipt_exists}=    Does Directory Exist    ${receipt_dir}
+    ${receipt_exists}=    Does Directory Exist    ${DIR_Receipt}
     IF    ${receipt_exists} == ${True}
-        Remove Directory    ${receipt_dir}    recursive=${True}
+        Remove Directory    ${DIR_Receipt}    recursive=${True}
     END
 
+    ${CSV_URL}=    Collect search query from user
     Download CSV    ${CSV_URL}
