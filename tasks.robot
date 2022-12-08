@@ -49,7 +49,7 @@ Order robots
 Collect search query from user
     Add text input    URL    label=CSV Location
     ${response}=    Run dialog
-    RETURN    ${response.search}
+    RETURN    ${response.URL}
 
 Create ZIP
     [Arguments]    ${folder}
