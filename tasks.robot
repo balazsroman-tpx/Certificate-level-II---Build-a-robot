@@ -17,7 +17,7 @@ Suite Teardown      Close All Browsers
 
 *** Variables ***
 ${URL_CSV}=             https://robotsparebinindustries.com/orders.csv
-${URL_Web}=             https://robotsparebinindustries.com/#/robot-order
+# ${URL_Web}=    https://robotsparebinindustries.com/#/robot-order
 ${DIR_Receipt}          ${OUTPUT_DIR}${/}receipts
 ${DIR_Screenshot}       ${OUTPUT_DIR}${/}screenshots
 ${MAX_Retry}            5x
@@ -28,6 +28,7 @@ ${MIN_Timeout}          1s
 Order robots
     [Setup]    Startup    ${DIR_Screenshot}    ${DIR_Receipt}    ${URL_CSV}
 
+    ${URL_Web}=    Get Web URL
     Open Browser for Ordering    ${URL_Web}
 
     ${orders}=    Read table from CSV    orders.csv    header=True
@@ -129,8 +130,10 @@ Startup
         Remove Directory    ${DIR_Receipt}    recursive=${True}
     END
 
-    # ${URL_CSV}=    Collect search query from user
-    ${Secret}=    Get Secret    Secret
-    Log Many    ${Secret}
-    ${URL_Web}=    ${Secret}[URL]
+    ${URL_CSV}=    Collect search query from user
     Download CSV    ${URL_CSV}
+
+Get Web URL
+    ${Secret}=    Get Secret    Secret
+    RETURN    ${Secret}[URL]
+    # Set Global Variable    ${URL_Web}    ${Secret}[URL]
