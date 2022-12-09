@@ -7,10 +7,10 @@ Library             RPA.Tables
 Library             RPA.FileSystem
 Library             RPA.PDF
 Library             RPA.Archive
-Library             DateTime
 Library             RPA.Dialogs
-Library             OperatingSystem
 Library             RPA.Robocorp.Vault
+Library             DateTime
+Library             OperatingSystem
 
 Suite Teardown      Close All Browsers
 
