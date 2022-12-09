@@ -9,6 +9,8 @@ Library             RPA.PDF
 Library             RPA.Archive
 Library             DateTime
 Library             RPA.Dialogs
+Library             OperatingSystem
+Library             RPA.Robocorp.Vault
 
 Suite Teardown      Close All Browsers
 
@@ -16,15 +18,15 @@ Suite Teardown      Close All Browsers
 *** Variables ***
 ${URL_CSV}=             https://robotsparebinindustries.com/orders.csv
 ${URL_Web}=             https://robotsparebinindustries.com/#/robot-order
-${DIR_Receipt}          ${OUTPUT_DIR}${/}screenshots
-${DIR_Screenshot}       ${OUTPUT_DIR}${/}receipts
+${DIR_Receipt}          ${OUTPUT_DIR}${/}receipts
+${DIR_Screenshot}       ${OUTPUT_DIR}${/}screenshots
 ${MAX_Retry}            5x
 ${MIN_Timeout}          1s
 
 
 *** Tasks ***
 Order robots
-    [Setup]    Startup    ${DIR_Screenshot}    ${DIR_Receipt}
+    [Setup]    Startup    ${DIR_Screenshot}    ${DIR_Receipt}    ${URL_CSV}
 
     Open Browser for Ordering    ${URL_Web}
 
@@ -103,7 +105,12 @@ Generate Receipt PDF
 
 Create final PDF
     [Arguments]    ${no}    ${DIR_Screenshot}    ${DIR_Receipt}
-    ${pdf}=    Open Pdf    ${DIR_Receipt}${/}order${no}.pdf
+    Wait Until Keyword Succeeds
+    ...    ${MAX_Retry}
+    ...    ${MIN_Timeout}
+    ...    File Should Exist
+    ...    ${DIR_Receipt}${/}order${no}.pdf
+
     Add Watermark Image To Pdf
     ...    ${DIR_Screenshot}${/}order${no}.png
     ...    ${DIR_Receipt}${/}order${no}.pdf
@@ -111,7 +118,7 @@ Create final PDF
     Close Pdf
 
 Startup
-    [Arguments]    ${DIR_Screenshot}    ${DIR_Receipt}
+    [Arguments]    ${DIR_Screenshot}    ${DIR_Receipt}    ${URL_CSV}
     ${screenshot_exists}=    Does Directory Exist    ${DIR_Screenshot}
     IF    ${screenshot_exists} == ${True}
         Remove Directory    ${DIR_Screenshot}    recursive=${True}
@@ -122,5 +129,8 @@ Startup
         Remove Directory    ${DIR_Receipt}    recursive=${True}
     END
 
-    ${CSV_URL}=    Collect search query from user
-    Download CSV    ${CSV_URL}
+    # ${URL_CSV}=    Collect search query from user
+    ${Secret}=    Get Secret    Secret
+    Log Many    ${Secret}
+    ${URL_Web}=    ${Secret}[URL]
+    Download CSV    ${URL_CSV}
